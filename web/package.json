@@ -1,0 +1,5 @@
+{
+  "name": "deployment-manager-ui",
+  "private": true,
+  "dependencies": {"react": "^18.3.1", "react-dom": "^18.3.1"}
+}
