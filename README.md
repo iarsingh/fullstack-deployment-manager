@@ -1,5 +1,47 @@
 # Full-stack deployment manager
 
+<!-- project-guide:start -->
+## Project guide
+
+[Project architecture](PROJECT_ARCHITECTURE.md) · [Interview questions and answers](INTERVIEW_QA.md)
+
+Use the architecture document for the component diagram, implementation boundaries, and verification entry points. The interview guide includes source-backed answers and project walkthroughs.
+
+### Implementation map
+
+| Component | Responsibility |
+| --- | --- |
+| [`src/deploys/main.py`](src/deploys/main.py) | HTTP handlers: `GET /healthz`, `GET /deployments`, `POST /deployments`, `GET /deployments/{deployment_id}`, `POST /deployments/{deployment_id}/status` |
+| [`src/deploys/store.py`](src/deploys/store.py) | Functions: `now`, `__init__`, `__init__`, `clear`, `validate`, `create`, `get` |
+| [`web/package.json`](web/package.json) | User interface code/assets |
+| [`requirements.txt`](requirements.txt) | Implementation or supporting configuration |
+| [`web/src/App.tsx`](web/src/App.tsx) | User interface code/assets |
+| [`Dockerfile`](Dockerfile) | Container build/service configuration |
+| [`docker-compose.yml`](docker-compose.yml) | Container build/service configuration |
+| [`tests/test_deploys.py`](tests/test_deploys.py) | Executable checks and regression examples |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions job definitions |
+| [`README.md`](README.md) | Project explanations or operating notes |
+
+### Local setup and verification
+
+From the repository root (the commands follow the checked-in manifests):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pytest -q
+```
+
+To serve the FastAPI application locally, install the server separately if it is not already available:
+
+```bash
+python -m pip install uvicorn
+PYTHONPATH=src python -m uvicorn deploys.main:app --reload
+```
+
+<!-- project-guide:end -->
+
 Level: Intermediate
 
 Skills: React, TypeScript, FastAPI, Docker, state machines
