@@ -12,15 +12,19 @@ Use the architecture document for the component diagram, implementation boundari
 | Component | Responsibility |
 | --- | --- |
 | [`src/deploys/main.py`](src/deploys/main.py) | HTTP handlers: `GET /healthz`, `GET /deployments`, `POST /deployments`, `GET /deployments/{deployment_id}`, `POST /deployments/{deployment_id}/status` |
+| [`src/deploys/ops.py`](src/deploys/ops.py) | HTTP handlers: `GET /readyz`, `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{workspace_id}/jobs`, `GET /jobs/{job_id}` |
 | [`src/deploys/store.py`](src/deploys/store.py) | Functions: `now`, `__init__`, `__init__`, `clear`, `validate`, `create`, `get` |
 | [`web/package.json`](web/package.json) | User interface code/assets |
 | [`requirements.txt`](requirements.txt) | Implementation or supporting configuration |
 | [`web/src/App.tsx`](web/src/App.tsx) | User interface code/assets |
 | [`Dockerfile`](Dockerfile) | Container build/service configuration |
+| [`Makefile`](Makefile) | Implementation or supporting configuration |
 | [`docker-compose.yml`](docker-compose.yml) | Container build/service configuration |
 | [`tests/test_deploys.py`](tests/test_deploys.py) | Executable checks and regression examples |
+| [`tests/test_ops.py`](tests/test_ops.py) | Executable checks and regression examples |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions job definitions |
 | [`README.md`](README.md) | Project explanations or operating notes |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Project explanations or operating notes |
 
 ### Local setup and verification
 

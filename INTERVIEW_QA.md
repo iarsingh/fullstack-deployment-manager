@@ -13,13 +13,13 @@ I would demonstrate the linked implementation or examples and distinguish that e
 ## 2. How is this repository organized?
 
 - [`src/deploys/main.py`](src/deploys/main.py): Implementation or supporting configuration.
+- [`src/deploys/ops.py`](src/deploys/ops.py): Implementation or supporting configuration.
 - [`src/deploys/store.py`](src/deploys/store.py): Implementation or supporting configuration.
 - [`web/package.json`](web/package.json): User interface code/assets.
 - [`requirements.txt`](requirements.txt): Implementation or supporting configuration.
 - [`web/src/App.tsx`](web/src/App.tsx): User interface code/assets.
 - [`Dockerfile`](Dockerfile): Container build/service configuration.
-- [`docker-compose.yml`](docker-compose.yml): Container build/service configuration.
-- [`tests/test_deploys.py`](tests/test_deploys.py): Executable checks and regression examples.
+- [`Makefile`](Makefile): Implementation or supporting configuration.
 
 [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md) contains the component diagram and the implementation walkthrough.
 
@@ -62,13 +62,13 @@ It uses `DeployError`, `failed['id'].split`, `int`, `row['id'].split`, `self.cre
 
 Explicit failure paths include:
 
-- `HTTPException(status_code=exc.status, detail=str(exc))` in [`src/deploys/main.py`](src/deploys/main.py#L27).
+- `HTTPException(status_code=exc.status, detail=str(exc))` in [`src/deploys/main.py`](src/deploys/main.py#L29).
+- `HTTPException(status_code=404, detail='workspace not found')` in [`src/deploys/ops.py`](src/deploys/ops.py#L77).
+- `HTTPException(status_code=404, detail='job not found')` in [`src/deploys/ops.py`](src/deploys/ops.py#L100).
+- `HTTPException(status_code=404, detail='job not found')` in [`src/deploys/ops.py`](src/deploys/ops.py#L109).
+- `HTTPException(status_code=403, detail='production apply is disabled in this lab')` in [`src/deploys/ops.py`](src/deploys/ops.py#L113).
 - `DeployError('deployment not found', status=404)` in [`src/deploys/store.py`](src/deploys/store.py#L65).
 - `DeployError('prod is recorded by a pull request, not this form')` in [`src/deploys/store.py`](src/deploys/store.py#L34).
-- `DeployError('environment must be dev or staging')` in [`src/deploys/store.py`](src/deploys/store.py#L36).
-- `DeployError('name must be lowercase letters, digits, and dashes')` in [`src/deploys/store.py`](src/deploys/store.py#L38).
-- `DeployError('image must be repository:tag')` in [`src/deploys/store.py`](src/deploys/store.py#L40).
-- `DeployError('pin a tag; latest is refused')` in [`src/deploys/store.py`](src/deploys/store.py#L42).
 
 I would test both the condition that reaches each exception and the caller that translates it. An explicit raise does not mean every malformed input or dependency failure is handled.
 
@@ -89,18 +89,20 @@ This is a concrete regression example from the repository. Its assertions establ
 
 ## 7. What HTTP interface does the code expose?
 
-- `GET /healthz` → `healthz` in [`src/deploys/main.py`](src/deploys/main.py#L31).
-- `GET /deployments` → `list_deployments` in [`src/deploys/main.py`](src/deploys/main.py#L36).
-- `POST /deployments` → `create_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L41).
-- `GET /deployments/{deployment_id}` → `get_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L46).
-- `POST /deployments/{deployment_id}/status` → `move_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L51).
-- `POST /deployments/{deployment_id}/rollback` → `rollback_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L56).
+- `GET /healthz` → `healthz` in [`src/deploys/main.py`](src/deploys/main.py#L33).
+- `GET /deployments` → `list_deployments` in [`src/deploys/main.py`](src/deploys/main.py#L38).
+- `POST /deployments` → `create_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L43).
+- `GET /deployments/{deployment_id}` → `get_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L48).
+- `POST /deployments/{deployment_id}/status` → `move_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L53).
+- `POST /deployments/{deployment_id}/rollback` → `rollback_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L58).
+- `GET /readyz` → `readyz` in [`src/deploys/ops.py`](src/deploys/ops.py#L44).
+- `POST /workspaces` → `create_workspace` in [`src/deploys/ops.py`](src/deploys/ops.py#L49).
 
 These are literal decorators. Application/router prefixes, authentication, and middleware must be checked in the corresponding setup code.
 
 ## 8. Where does state live, and what happens with multiple workers?
 
-Module-level containers include `ENVIRONMENTS`, `TRANSITIONS` in [`src/deploys/store.py`](src/deploys/store.py).
+Module-level containers include `_WORKSPACES`, `_JOBS`, `_AUDIT`, `_METRICS` in [`src/deploys/ops.py`](src/deploys/ops.py); `ENVIRONMENTS`, `TRANSITIONS` in [`src/deploys/store.py`](src/deploys/store.py).
 
 These containers belong to a Python process. Inspect which are constant fixtures and which are mutated. Mutable process state needs an explicit shared-storage or synchronization strategy before multiple workers can provide consistent behavior.
 
@@ -149,3 +151,9 @@ A useful extension is a table-driven test that covers each condition just below,
 [`web/src/App.tsx`](web/src/App.tsx) defines `App`, `load`, `send`, `submit`. Its imports include `react`.
 
 Trace these definitions and imports to explain the module boundary. Relative imports identify project code; package imports should be checked against the nearest manifest.
+
+## 15. What does the operations plane add, and where is its limit?
+
+[`src/deploys/ops.py`](src/deploys/ops.py) declares `GET /readyz`, `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{workspace_id}/jobs`, `GET /jobs/{job_id}`, `POST /jobs/{job_id}/approve`, `GET /audit`, `GET /metrics`. Inspect the application’s `include_router` call for its URL prefix.
+
+Its state containers are `_WORKSPACES`, `_JOBS`, `_AUDIT`, `_METRICS`. The job-approval handler defines whether a target is accepted or refused; check that branch and the associated tests instead of treating a recorded job as a successful infrastructure apply.

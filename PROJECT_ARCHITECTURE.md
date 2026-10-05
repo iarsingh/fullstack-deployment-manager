@@ -13,8 +13,10 @@ This document describes files and symbols in this checkout. Deployment templates
 ```mermaid
 flowchart LR
     M0["src/deploys/main.py"]
-    M1["src/deploys/store.py"]
+    M1["src/deploys/ops.py"]
+    M2["src/deploys/store.py"]
     M0 -->|imports| M1
+    M0 -->|imports| M2
 ```
 
 For Python repositories, arrows show resolved local imports, not network calls or deployment order. Otherwise the diagram is a repository component map; containment arrows do not assert runtime integration.
@@ -24,26 +26,44 @@ For Python repositories, arrows show resolved local imports, not network calls o
 | Component | Responsibility |
 | --- | --- |
 | [`src/deploys/main.py`](src/deploys/main.py) | HTTP handlers: `GET /healthz`, `GET /deployments`, `POST /deployments`, `GET /deployments/{deployment_id}`, `POST /deployments/{deployment_id}/status` |
+| [`src/deploys/ops.py`](src/deploys/ops.py) | HTTP handlers: `GET /readyz`, `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{workspace_id}/jobs`, `GET /jobs/{job_id}` |
 | [`src/deploys/store.py`](src/deploys/store.py) | Functions: `now`, `__init__`, `__init__`, `clear`, `validate`, `create`, `get` |
 | [`web/package.json`](web/package.json) | User interface code/assets |
 | [`requirements.txt`](requirements.txt) | Implementation or supporting configuration |
 | [`web/src/App.tsx`](web/src/App.tsx) | User interface code/assets |
 | [`Dockerfile`](Dockerfile) | Container build/service configuration |
+| [`Makefile`](Makefile) | Implementation or supporting configuration |
 | [`docker-compose.yml`](docker-compose.yml) | Container build/service configuration |
 | [`tests/test_deploys.py`](tests/test_deploys.py) | Executable checks and regression examples |
+| [`tests/test_ops.py`](tests/test_ops.py) | Executable checks and regression examples |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | GitHub Actions job definitions |
 | [`README.md`](README.md) | Project explanations or operating notes |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Project explanations or operating notes |
+
+## Existing design and operating guides
+
+These checked-in guides provide the project’s detailed design, operational context, or deployment view:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Request interface
 
 | Method and path | Handler | Source |
 | --- | --- | --- |
-| `GET /healthz` | `healthz` | [`src/deploys/main.py`](src/deploys/main.py#L31) |
-| `GET /deployments` | `list_deployments` | [`src/deploys/main.py`](src/deploys/main.py#L36) |
-| `POST /deployments` | `create_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L41) |
-| `GET /deployments/{deployment_id}` | `get_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L46) |
-| `POST /deployments/{deployment_id}/status` | `move_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L51) |
-| `POST /deployments/{deployment_id}/rollback` | `rollback_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L56) |
+| `GET /healthz` | `healthz` | [`src/deploys/main.py`](src/deploys/main.py#L33) |
+| `GET /deployments` | `list_deployments` | [`src/deploys/main.py`](src/deploys/main.py#L38) |
+| `POST /deployments` | `create_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L43) |
+| `GET /deployments/{deployment_id}` | `get_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L48) |
+| `POST /deployments/{deployment_id}/status` | `move_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L53) |
+| `POST /deployments/{deployment_id}/rollback` | `rollback_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L58) |
+| `GET /readyz` | `readyz` | [`src/deploys/ops.py`](src/deploys/ops.py#L44) |
+| `POST /workspaces` | `create_workspace` | [`src/deploys/ops.py`](src/deploys/ops.py#L49) |
+| `GET /workspaces` | `list_workspaces` | [`src/deploys/ops.py`](src/deploys/ops.py#L66) |
+| `POST /workspaces/{workspace_id}/jobs` | `create_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L73) |
+| `GET /jobs/{job_id}` | `get_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L96) |
+| `POST /jobs/{job_id}/approve` | `approve_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L105) |
+| `GET /audit` | `audit` | [`src/deploys/ops.py`](src/deploys/ops.py#L122) |
+| `GET /metrics` | `metrics` | [`src/deploys/ops.py`](src/deploys/ops.py#L138) |
 
 The table lists literal route decorators found in the inspected Python modules. Router prefixes and middleware can add behavior; check the linked handler and application setup before calling an endpoint.
 
@@ -138,7 +158,11 @@ Calls visible in this function: `DeployError`, `TRANSITIONS.get`, `now`, `row['h
 
 | Explicit exception | Source |
 | --- | --- |
-| `HTTPException(status_code=exc.status, detail=str(exc))` | [`src/deploys/main.py`](src/deploys/main.py#L27) |
+| `HTTPException(status_code=exc.status, detail=str(exc))` | [`src/deploys/main.py`](src/deploys/main.py#L29) |
+| `HTTPException(status_code=404, detail='workspace not found')` | [`src/deploys/ops.py`](src/deploys/ops.py#L77) |
+| `HTTPException(status_code=404, detail='job not found')` | [`src/deploys/ops.py`](src/deploys/ops.py#L100) |
+| `HTTPException(status_code=404, detail='job not found')` | [`src/deploys/ops.py`](src/deploys/ops.py#L109) |
+| `HTTPException(status_code=403, detail='production apply is disabled in this lab')` | [`src/deploys/ops.py`](src/deploys/ops.py#L113) |
 | `DeployError('deployment not found', status=404)` | [`src/deploys/store.py`](src/deploys/store.py#L65) |
 | `DeployError('prod is recorded by a pull request, not this form')` | [`src/deploys/store.py`](src/deploys/store.py#L34) |
 | `DeployError('environment must be dev or staging')` | [`src/deploys/store.py`](src/deploys/store.py#L36) |
@@ -154,6 +178,7 @@ These are explicit exceptions in the inspected source, rather than a claim that 
 
 ## Data and state
 
+- [`src/deploys/ops.py`](src/deploys/ops.py) defines module-level containers: `_WORKSPACES`, `_JOBS`, `_AUDIT`, `_METRICS`.
 - [`src/deploys/store.py`](src/deploys/store.py) defines module-level containers: `ENVIRONMENTS`, `TRANSITIONS`.
 
 Module-level dictionaries/lists live in a Python process. They can be fixtures or mutable state; inspect writes before treating them as persistent storage. A production extension would need to define persistence and concurrency behavior explicitly.
@@ -192,6 +217,12 @@ A useful extension is a table-driven test that covers each condition just below,
 
 Trace these definitions and imports to explain the module boundary. Relative imports identify project code; package imports should be checked against the nearest manifest.
 
+### What does the operations plane add, and where is its limit
+
+[`src/deploys/ops.py`](src/deploys/ops.py) declares `GET /readyz`, `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{workspace_id}/jobs`, `GET /jobs/{job_id}`, `POST /jobs/{job_id}/approve`, `GET /audit`, `GET /metrics`. Inspect the application’s `include_router` call for its URL prefix.
+
+Its state containers are `_WORKSPACES`, `_JOBS`, `_AUDIT`, `_METRICS`. The job-approval handler defines whether a target is accepted or refused; check that branch and the associated tests instead of treating a recorded job as a successful infrastructure apply.
+
 ## Setup and verification
 
 The following commands are derived from the checked-in dependency/test contracts. Execute them from the repository root; the block prepares a local environment, not a cloud deployment.
@@ -205,7 +236,7 @@ python -m pytest -q
 
 Python dependencies: [`requirements.txt`](requirements.txt).
 
-Test entry points: [`tests/test_deploys.py`](tests/test_deploys.py).
+Test entry points: [`tests/test_deploys.py`](tests/test_deploys.py), [`tests/test_ops.py`](tests/test_ops.py).
 
 Automation definitions: [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Read their triggers and job steps to determine what CI actually runs.
 
