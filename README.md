@@ -77,3 +77,7 @@ docker compose up --build
 - A rollback when there is no earlier successful deployment (409).
 
 The store is in memory, so a restart clears it. It records deployments; it does not run them.
+
+## Ops plane
+
+Workspaces, tenant isolation, job approval, and audit live under `/v1`. Production apply is refused. See `docs/ARCHITECTURE.md`.

@@ -1,3 +1,4 @@
+from deploys.ops import router as ops_router
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
@@ -6,6 +7,7 @@ from pydantic import BaseModel
 from deploys.store import DeployError, Store
 
 app = FastAPI(title="Deployment manager")
+app.include_router(ops_router, prefix="/v1")
 STORE = Store()
 ROWS = STORE.rows
 
