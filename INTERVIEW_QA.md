@@ -95,8 +95,8 @@ This is a concrete regression example from the repository. Its assertions establ
 - `GET /deployments/{deployment_id}` → `get_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L48).
 - `POST /deployments/{deployment_id}/status` → `move_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L53).
 - `POST /deployments/{deployment_id}/rollback` → `rollback_deployment` in [`src/deploys/main.py`](src/deploys/main.py#L58).
-- `GET /readyz` → `readyz` in [`src/deploys/ops.py`](src/deploys/ops.py#L44).
-- `POST /workspaces` → `create_workspace` in [`src/deploys/ops.py`](src/deploys/ops.py#L49).
+- `GET /readyz` → `readyz` in [`src/deploys/ops.py`](src/deploys/ops.py#L74).
+- `POST /workspaces` → `create_workspace` in [`src/deploys/ops.py`](src/deploys/ops.py#L80).
 
 These are literal decorators. Application/router prefixes, authentication, and middleware must be checked in the corresponding setup code.
 

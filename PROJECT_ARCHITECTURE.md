@@ -56,14 +56,14 @@ These checked-in guides provide the project’s detailed design, operational con
 | `GET /deployments/{deployment_id}` | `get_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L48) |
 | `POST /deployments/{deployment_id}/status` | `move_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L53) |
 | `POST /deployments/{deployment_id}/rollback` | `rollback_deployment` | [`src/deploys/main.py`](src/deploys/main.py#L58) |
-| `GET /readyz` | `readyz` | [`src/deploys/ops.py`](src/deploys/ops.py#L44) |
-| `POST /workspaces` | `create_workspace` | [`src/deploys/ops.py`](src/deploys/ops.py#L49) |
-| `GET /workspaces` | `list_workspaces` | [`src/deploys/ops.py`](src/deploys/ops.py#L66) |
-| `POST /workspaces/{workspace_id}/jobs` | `create_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L73) |
-| `GET /jobs/{job_id}` | `get_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L96) |
-| `POST /jobs/{job_id}/approve` | `approve_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L105) |
-| `GET /audit` | `audit` | [`src/deploys/ops.py`](src/deploys/ops.py#L122) |
-| `GET /metrics` | `metrics` | [`src/deploys/ops.py`](src/deploys/ops.py#L138) |
+| `GET /readyz` | `readyz` | [`src/deploys/ops.py`](src/deploys/ops.py#L74) |
+| `POST /workspaces` | `create_workspace` | [`src/deploys/ops.py`](src/deploys/ops.py#L80) |
+| `GET /workspaces` | `list_workspaces` | [`src/deploys/ops.py`](src/deploys/ops.py#L98) |
+| `POST /workspaces/{workspace_id}/jobs` | `create_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L106) |
+| `GET /jobs/{job_id}` | `get_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L130) |
+| `POST /jobs/{job_id}/approve` | `approve_job` | [`src/deploys/ops.py`](src/deploys/ops.py#L140) |
+| `GET /audit` | `audit` | [`src/deploys/ops.py`](src/deploys/ops.py#L160) |
+| `GET /metrics` | `metrics` | [`src/deploys/ops.py`](src/deploys/ops.py#L176) |
 
 The table lists literal route decorators found in the inspected Python modules. Router prefixes and middleware can add behavior; check the linked handler and application setup before calling an endpoint.
 
